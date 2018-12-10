@@ -2,10 +2,12 @@
 #include <windowsx.h>
 #include <Windows.h>
 
+#include "GraphicsD2D.h"
+
 class WindowBaseApplication
 {
 public:
-	WindowBaseApplication() :m_bQuit(false) {};
+	WindowBaseApplication() :m_bQuit(false), m_graphics(){};
 
 	bool Initialize();
 	void Tick();
@@ -23,6 +25,8 @@ private:
 
 	bool m_bQuit;
 	HWND m_hWnd;
+
+	GraphicsD2D m_graphics;
 
 	static const char* m_appName;
 	static const char* m_winTitle;

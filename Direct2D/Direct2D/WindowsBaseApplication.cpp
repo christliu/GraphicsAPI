@@ -38,7 +38,8 @@ bool WindowBaseApplication::Initialize()
 	);
 
 	ShowWindow(m_hWnd, SW_SHOW);
-	return true;
+
+	return m_graphics.Initialize(m_hWnd);
 }
 
 void WindowBaseApplication::Tick()
@@ -62,7 +63,9 @@ void WindowBaseApplication::Finalize()
 }
 
 void WindowBaseApplication::OnDraw()
-{}
+{
+	m_graphics.Draw();
+}
 
 LRESULT CALLBACK WindowBaseApplication::WindowProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
