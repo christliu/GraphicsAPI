@@ -21,18 +21,60 @@ bool GraphicsD2D::Initialize(HWND &hWnd)
 	hr = pD2DRenderTarget->CreateSolidColorBrush(D2D1::ColorF(D2D1::ColorF::Black), &pBlackBrush);
 
 	if (FAILED(hr))
-	{
 		return FALSE;
-	}
+	hr = pD2DRenderTarget->CreateSolidColorBrush(D2D1::ColorF(D2D1::ColorF::Yellow), &pYellowBrush);
+	if (FAILED(hr))
+		return FALSE;
+
+	if(FAILED(pD2DRenderTarget->CreateSolidColorBrush(D2D1::ColorF(D2D1::ColorF::White), &pWhiteBrush)))
+		return FALSE;
 	return TRUE;
 }
 
 void GraphicsD2D::Draw()
 {
 	pD2DRenderTarget->BeginDraw();
-	pD2DRenderTarget->Clear(D2D1::ColorF(D2D1::ColorF::White));
+	pD2DRenderTarget->Clear(D2D1::ColorF(D2D1::ColorF::DarkGray));
 
 	D2D1_SIZE_F rtSize = pD2DRenderTarget->GetSize();
-	pD2DRenderTarget->DrawRectangle(D2D1::RectF(0 + 10.0f, 0 + 10.0f, rtSize.width - 10.0f, rtSize.height - 10.0f), pBlackBrush);
+	//pD2DRenderTarget->DrawRectangle(D2D1::RectF(0 + 10.0f, 0 + 10.0f, rtSize.width - 10.0f, rtSize.height - 10.0f), pBlackBrush);
+
+	// Draw face
+	D2D1_POINT_2F center = D2D1::Point2F(rtSize.width / 2, rtSize.height / 2);
+	float radius = rtSize.height / 6;
+	D2D1_ELLIPSE eclipse_face = D2D1::Ellipse(center, radius, radius);
+	pD2DRenderTarget->DrawEllipse(eclipse_face, pYellowBrush);
+	pD2DRenderTarget->FillEllipse(eclipse_face, pYellowBrush);
+
+	// Draw mouth
+	float center2mouth = 0.3f, mouthrange = 0.3f;
+	D2D1_POINT_2F mouthCenter = D2D1::Point2F(center.x, center.y + center2mouth * radius + mouthrange * radius * 0.5);
+	D2D1_ELLIPSE eclipse_mouth = D2D1::Ellipse(mouthCenter, mouthrange * radius * 0.5, mouthrange * radius * 0.5 * 0.5);
+	pD2DRenderTarget->DrawEllipse(eclipse_mouth, pWhiteBrush);
+	pD2DRenderTarget->FillEllipse(eclipse_mouth, pWhiteBrush);
+
+	// Draw eyes
+	float eyes_distance = 0.5f, eyes_height = 0.2f, eyes_radius = 0.2f;
+
+	D2D1_POINT_2F left_eye_center = D2D1::Point2F(center.x - eyes_distance * radius, center.y - eyes_height * radius);
+	D2D1_ELLIPSE left_eye = D2D1::Ellipse(left_eye_center, eyes_radius * radius, eyes_radius * radius);
+	pD2DRenderTarget->DrawEllipse(left_eye, pWhiteBrush);
+	pD2DRenderTarget->FillEllipse(left_eye, pWhiteBrush);
+
+	float eyebrow_radius = 0.3;
+	D2D1_ELLIPSE left_eyebrow = D2D1::Ellipse(left_eye_center, eyes_radius * radius * eyebrow_radius, eyes_radius * radius * eyebrow_radius);
+	pD2DRenderTarget->DrawEllipse(left_eyebrow, pBlackBrush);
+	pD2DRenderTarget->FillEllipse(left_eyebrow, pBlackBrush);
+
+	D2D1_POINT_2F right_eye_center = D2D1::Point2F(center.x + eyes_distance * radius, center.y - eyes_height * radius);
+	D2D1_ELLIPSE right_eye = D2D1::Ellipse(right_eye_center, eyes_radius * radius, eyes_radius * radius);
+	pD2DRenderTarget->DrawEllipse(right_eye, pWhiteBrush);
+	pD2DRenderTarget->FillEllipse(right_eye, pWhiteBrush);
+
+	D2D1_ELLIPSE right_eyebrow = D2D1::Ellipse(right_eye_center, eyes_radius * radius * eyebrow_radius, eyes_radius * radius * eyebrow_radius);
+	pD2DRenderTarget->DrawEllipse(right_eyebrow, pBlackBrush);
+	pD2DRenderTarget->FillEllipse(right_eyebrow, pBlackBrush);
+
+
 	pD2DRenderTarget->EndDraw();
 }

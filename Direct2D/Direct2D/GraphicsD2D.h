@@ -14,4 +14,6 @@ private:
 	ID2D1HwndRenderTarget *pD2DRenderTarget;
 
 	ID2D1SolidColorBrush* pBlackBrush;
+	ID2D1SolidColorBrush* pYellowBrush;
+	ID2D1SolidColorBrush* pWhiteBrush;
 };
