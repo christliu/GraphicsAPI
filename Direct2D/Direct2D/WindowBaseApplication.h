@@ -17,6 +17,7 @@ public:
 
 	void Quit();
 	void OnDraw();
+	void OnMouseMove(int x, int y);
 
 	static LRESULT CALLBACK WindowProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam);
 

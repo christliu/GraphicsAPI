@@ -1,5 +1,8 @@
 
 #include "GraphicsD2D.h"
+#include <math.h>
+#include <iostream>
+using namespace std;
 
 bool GraphicsD2D::Initialize(HWND &hWnd)
 {
@@ -62,7 +65,15 @@ void GraphicsD2D::Draw()
 	pD2DRenderTarget->FillEllipse(left_eye, pWhiteBrush);
 
 	float eyebrow_radius = 0.3;
-	D2D1_ELLIPSE left_eyebrow = D2D1::Ellipse(left_eye_center, eyes_radius * radius * eyebrow_radius, eyes_radius * radius * eyebrow_radius);
+
+	float left_theta = asin(float(mouseY - left_eye_center.y) / sqrt(float(mouseX - left_eye_center.x) * (mouseX - left_eye_center.x) + (mouseY - left_eye_center.y) * (mouseY - left_eye_center.y))) ;
+
+	float left_eyebrow_a = 0.8f;
+	D2D1_POINT_2F left_eyebrow_center = D2D1::Point2F(left_eye_center.x + left_eyebrow_a * eyes_radius * radius * cos(left_theta), left_eye_center.y + left_eyebrow_a * eyes_radius * radius * sin(left_theta));
+	if(mouseX < left_eye_center.x)
+		left_eyebrow_center = D2D1::Point2F(left_eye_center.x - left_eyebrow_a * eyes_radius * radius * cos(left_theta), left_eye_center.y + left_eyebrow_a * eyes_radius * radius * sin(left_theta));
+
+	D2D1_ELLIPSE left_eyebrow = D2D1::Ellipse(left_eyebrow_center, eyes_radius * radius * eyebrow_radius, eyes_radius * radius * eyebrow_radius);
 	pD2DRenderTarget->DrawEllipse(left_eyebrow, pBlackBrush);
 	pD2DRenderTarget->FillEllipse(left_eyebrow, pBlackBrush);
 
@@ -71,10 +82,22 @@ void GraphicsD2D::Draw()
 	pD2DRenderTarget->DrawEllipse(right_eye, pWhiteBrush);
 	pD2DRenderTarget->FillEllipse(right_eye, pWhiteBrush);
 
-	D2D1_ELLIPSE right_eyebrow = D2D1::Ellipse(right_eye_center, eyes_radius * radius * eyebrow_radius, eyes_radius * radius * eyebrow_radius);
+	float right_theta = asin(float(mouseY - right_eye_center.y) / sqrt(float(mouseX - right_eye_center.x) * (mouseX - right_eye_center.x) + (mouseY - right_eye_center.y) * (mouseY - right_eye_center.y)));
+	D2D1_POINT_2F right_eyebrow_center = D2D1::Point2F(right_eye_center.x + left_eyebrow_a * eyes_radius * radius * cos(right_theta), left_eye_center.y + left_eyebrow_a * eyes_radius * radius * sin(right_theta));
+	if(mouseX < right_eye_center.x)
+		right_eyebrow_center = D2D1::Point2F(right_eye_center.x - left_eyebrow_a * eyes_radius * radius * cos(right_theta), left_eye_center.y + left_eyebrow_a * eyes_radius * radius * sin(right_theta));
+
+	D2D1_ELLIPSE right_eyebrow = D2D1::Ellipse(right_eyebrow_center, eyes_radius * radius * eyebrow_radius, eyes_radius * radius * eyebrow_radius);
 	pD2DRenderTarget->DrawEllipse(right_eyebrow, pBlackBrush);
 	pD2DRenderTarget->FillEllipse(right_eyebrow, pBlackBrush);
 
 
 	pD2DRenderTarget->EndDraw();
+}
+
+
+void GraphicsD2D::OnMouseMove(int x, int y)
+{
+	mouseX = x, mouseY = y;
+	Draw();
 }

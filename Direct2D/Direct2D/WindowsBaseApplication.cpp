@@ -67,6 +67,11 @@ void WindowBaseApplication::OnDraw()
 	m_graphics.Draw();
 }
 
+void WindowBaseApplication::OnMouseMove(int x, int y)
+{
+	m_graphics.OnMouseMove(x, y);
+}
+
 LRESULT CALLBACK WindowBaseApplication::WindowProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
 	WindowBaseApplication *pThis;
@@ -89,10 +94,18 @@ LRESULT CALLBACK WindowBaseApplication::WindowProc(HWND hWnd, UINT message, WPAR
 
 	switch (message)
 	{
+
 	case WM_PAINT:
 		pThis->OnDraw();
 		break;
 
+	case WM_MOUSEMOVE:
+	{
+		int x = LOWORD(lParam);
+		int y = HIWORD(lParam);
+		pThis->OnMouseMove(x, y);
+		break;
+	}
 	case WM_DESTROY:
 		PostQuitMessage(0);
 		pThis->Quit();
