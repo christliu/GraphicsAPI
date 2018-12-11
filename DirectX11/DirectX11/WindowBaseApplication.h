@@ -1,7 +1,7 @@
 #pragma once
 #include <windowsx.h>
 #include <Windows.h>
-
+#include "DX11Graphics.h"
 
 
 class WindowBaseApplication
@@ -26,8 +26,7 @@ private:
 
 	bool m_bQuit;
 	HWND m_hWnd;
-
-
+	DX11Graphics m_graphics;
 
 	static const char* m_appName;
 	static const char* m_winTitle;

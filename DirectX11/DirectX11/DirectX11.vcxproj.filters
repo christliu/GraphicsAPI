@@ -21,9 +21,15 @@
     <ClCompile Include="WindowsBaseApplication.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
+    <ClCompile Include="DX11Graphics.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="WindowBaseApplication.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="DX11Graphics.h">
       <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>

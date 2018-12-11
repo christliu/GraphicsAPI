@@ -39,7 +39,8 @@ bool WindowBaseApplication::Initialize()
 
 	ShowWindow(m_hWnd, SW_SHOW);
 
-	return TRUE;
+	return m_graphics.Initialize(m_hWnd);
+
 }
 
 void WindowBaseApplication::Tick()
