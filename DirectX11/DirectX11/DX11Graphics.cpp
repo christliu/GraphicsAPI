@@ -8,8 +8,8 @@ bool DX11Graphics::Initialize(HWND& hwnd)
 	DXGI_SWAP_CHAIN_DESC sd;
 	ZeroMemory(&sd, sizeof(sd));
 	sd.BufferCount = 1;
-	sd.BufferDesc.Width = 640;
-	sd.BufferDesc.Height = 480;
+	sd.BufferDesc.Width = 600;
+	sd.BufferDesc.Height = 800;
 	sd.BufferDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
 	sd.BufferDesc.RefreshRate.Numerator = 60;
 	sd.BufferDesc.RefreshRate.Denominator = 1;
@@ -39,5 +39,39 @@ bool DX11Graphics::Initialize(HWND& hwnd)
 		return FALSE;
 	}
 	cout << "D3D11CreateDeviceAndSwapChain Success with FeatureLevel " << m_featureLevel << endl;
+
+	CreateRenderTarget();
+	cout << "CreateRenderTargetView Success" << endl;
 	return TRUE;
+}
+
+void DX11Graphics::CreateRenderTarget()
+{
+	HRESULT hr;
+	ID3D11Texture2D *pBackBuffer;
+
+	// Get a pointer to the back buffer
+	m_pSwapChain->GetBuffer(0, __uuidof(ID3D11Texture2D),
+		(LPVOID*)&pBackBuffer);
+
+	// Create a render-target view
+	m_pDevice->CreateRenderTargetView(pBackBuffer, NULL,
+		&m_pRtv);
+	pBackBuffer->Release();
+
+	// Bind the view
+	m_pImmediateContext->OMSetRenderTargets(1, &m_pRtv, NULL);
+}
+
+void DX11Graphics::SetViewport()
+{
+	D3D11_VIEWPORT viewport;
+	ZeroMemory(&viewport, sizeof(D3D11_VIEWPORT));
+
+	viewport.TopLeftX = 0;
+	viewport.TopLeftY = 0;
+	//viewport.Width = SCREEN_WIDTH;
+	//viewport.Height = SCREEN_HEIGHT;
+
+	m_pImmediateContext->RSSetViewports(1, &viewport);
 }
