@@ -7,7 +7,7 @@
 class WindowBaseApplication
 {
 public:
-	WindowBaseApplication() :m_bQuit(false){};
+	WindowBaseApplication() :m_bQuit(false), p_graphics(NULL){};
 
 	bool Initialize();
 	void Tick();
@@ -26,7 +26,7 @@ private:
 
 	bool m_bQuit;
 	HWND m_hWnd;
-	DX11Graphics m_graphics;
+	DX11Graphics* p_graphics;
 
 	static const char* m_appName;
 	static const char* m_winTitle;

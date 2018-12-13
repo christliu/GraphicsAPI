@@ -39,7 +39,9 @@ bool WindowBaseApplication::Initialize()
 
 	ShowWindow(m_hWnd, SW_SHOW);
 
-	return m_graphics.Initialize(m_hWnd);
+	p_graphics = new DX11Graphics(m_hWnd);
+
+	return p_graphics->Initialize();
 
 }
 
