@@ -67,7 +67,7 @@ void WindowBaseApplication::Finalize()
 
 void WindowBaseApplication::OnDraw()
 {
-	
+	p_graphics->OnDraw();
 }
 
 void WindowBaseApplication::OnMouseMove(int x, int y)
