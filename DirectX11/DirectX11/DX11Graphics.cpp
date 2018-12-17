@@ -168,6 +168,7 @@ void DX11Graphics::OnDraw()
 	// clear the back buffer to a deep blue
 	const FLOAT clearColor[] = { 0.0f, 0.2f, 0.4f, 1.0f };
 	m_pImmediateContext->ClearRenderTargetView(m_pRtv, clearColor);
+	cout << "First Branch CheckOut" << endl;
 
 	// do 3D rendering on the back buffer here
 	{
