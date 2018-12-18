@@ -66,10 +66,8 @@ bool DX11Graphics::Initialize()
 	cout << "CreateRenderTargetView Success" << endl;
 	SetViewport();
 	cout << "SetViewPort Success" << endl;
-	InitPipeline();
-	cout << "InitPipeline Success" << endl;
-	InitGraphics();
-	cout << "InitGraphics Success" << endl;
+
+
 	return TRUE;
 }
 
@@ -105,63 +103,74 @@ void DX11Graphics::SetViewport()
 	m_pImmediateContext->RSSetViewports(1, &viewport);
 }
 
-void DX11Graphics::InitPipeline()
+void DX11Graphics::BuildGeometryBuffers()
 {
-	// load and compile the two shaders
-	ID3DBlob *VS, *PS;
-
-	D3DReadFileToBlob(L"copy.vso", &VS);
-	D3DReadFileToBlob(L"copy.pso", &PS);
-
-	// encapsulate both shaders into shader objects
-	m_pDevice->CreateVertexShader(VS->GetBufferPointer(), VS->GetBufferSize(), NULL, &m_pVS);
-	m_pDevice->CreatePixelShader(PS->GetBufferPointer(), PS->GetBufferSize(), NULL, &m_pPS);
-
-	// set the shader objects
-	m_pImmediateContext->VSSetShader(m_pVS, 0, 0);
-	m_pImmediateContext->PSSetShader(m_pPS, 0, 0);
-
-	// create the input layout object
-	D3D11_INPUT_ELEMENT_DESC ied[] =
+	// Create vertex buffer
+	HRESULT hr;
+	VERTEX vertices[] =
 	{
-		{"POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0},
-		{"COLOR", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, 12, D3D11_INPUT_PER_VERTEX_DATA, 0},
+		{ XMFLOAT3(-1.0f, -1.0f, -1.0f), XMFLOAT4((const float*)Colors::White) },
+	{ XMFLOAT3(-1.0f, +1.0f, -1.0f), XMFLOAT4((const float*)&Colors::Black) },
+	{ XMFLOAT3(+1.0f, +1.0f, -1.0f), XMFLOAT4((const float*)&Colors::Red) },
+	{ XMFLOAT3(+1.0f, -1.0f, -1.0f), XMFLOAT4((const float*)&Colors::Green) },
+	{ XMFLOAT3(-1.0f, -1.0f, +1.0f), XMFLOAT4((const float*)&Colors::Blue) },
+	{ XMFLOAT3(-1.0f, +1.0f, +1.0f), XMFLOAT4((const float*)&Colors::Yellow) },
+	{ XMFLOAT3(+1.0f, +1.0f, +1.0f), XMFLOAT4((const float*)&Colors::Cyan) },
+	{ XMFLOAT3(+1.0f, -1.0f, +1.0f), XMFLOAT4((const float*)&Colors::Magenta) }
 	};
 
-	m_pDevice->CreateInputLayout(ied, 2, VS->GetBufferPointer(), VS->GetBufferSize(), &m_pInputLayout);
-	m_pImmediateContext->IASetInputLayout(m_pInputLayout);
+	D3D11_BUFFER_DESC vbd;
+	vbd.Usage = D3D11_USAGE_IMMUTABLE;
+	vbd.ByteWidth = sizeof(VERTEX) * 8;
+	vbd.BindFlags = D3D11_BIND_VERTEX_BUFFER;
+	vbd.CPUAccessFlags = 0;
+	vbd.MiscFlags = 0;
+	vbd.StructureByteStride = 0;
+	D3D11_SUBRESOURCE_DATA vinitData;
+	vinitData.pSysMem = vertices;
+	hr = m_pDevice->CreateBuffer(&vbd, &vinitData, &m_pVB);
+	assert(hr == 0, "CreateBufferFailed");
 
-	VS->Release();
-	PS->Release();
-}
+	// Create the index buffer
 
-void DX11Graphics::InitGraphics()
-{
-	// create a triangle using the VERTEX struct
-	VERTEX OurVertices[] =
-	{
-		{XMFLOAT3(0.0f, 0.5f, 0.0f), XMFLOAT4(1.0f, 0.0f, 0.0f, 1.0f)},
-		{XMFLOAT3(0.45f, -0.5, 0.0f), XMFLOAT4(0.0f, 1.0f, 0.0f, 1.0f)},
-		{XMFLOAT3(-0.45f, -0.5f, 0.0f), XMFLOAT4(0.0f, 0.0f, 1.0f, 1.0f)}
+	UINT indices[] = {
+		// front face
+		0, 1, 2,
+		0, 2, 3,
+
+		// back face
+		4, 6, 5,
+		4, 7, 6,
+
+		// left face
+		4, 5, 1,
+		4, 1, 0,
+
+		// right face
+		3, 2, 6,
+		3, 6, 7,
+
+		// top face
+		1, 5, 6,
+		1, 6, 2,
+
+		// bottom face
+		4, 0, 3,
+		4, 3, 7
 	};
 
-	// create the vertex buffer
-	D3D11_BUFFER_DESC bd;
-	ZeroMemory(&bd, sizeof(bd));
-
-	bd.Usage = D3D11_USAGE_DYNAMIC;                // write access access by CPU and GPU
-	bd.ByteWidth = sizeof(VERTEX) * 3;             // size is the VERTEX struct * 3
-	bd.BindFlags = D3D11_BIND_VERTEX_BUFFER;       // use as a vertex buffer
-	bd.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;    // allow CPU to write in buffer
-
-	m_pDevice->CreateBuffer(&bd, NULL, &m_pBuffer);       // create the buffer
-
-	// copy the vertices into the buffer
-	D3D11_MAPPED_SUBRESOURCE ms;
-	m_pImmediateContext->Map(m_pBuffer, NULL, D3D11_MAP_WRITE_DISCARD, NULL, &ms);    // map the buffer
-	memcpy(ms.pData, OurVertices, sizeof(VERTEX) * 3);                       // copy the data
-	m_pImmediateContext->Unmap(m_pBuffer, NULL);                                      // unmap the buffer
+	D3D11_BUFFER_DESC ibd;
+	ibd.Usage = D3D11_USAGE_IMMUTABLE;
+	ibd.ByteWidth = sizeof(UINT) * 36;
+	ibd.BindFlags = D3D11_BIND_INDEX_BUFFER;
+	ibd.CPUAccessFlags = 0;
+	ibd.MiscFlags = 0;
+	ibd.StructureByteStride = 0;
+	D3D11_SUBRESOURCE_DATA iinitData;
+	iinitData.pSysMem = indices;
+	HR(m_pDevice->CreateBuffer(&ibd, &iinitData, &m_pIB));
 }
+
 
 void DX11Graphics::OnDraw()
 {

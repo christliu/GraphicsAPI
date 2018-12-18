@@ -12,9 +12,13 @@ private:
 
 	void CreateRenderTarget();
 	void SetViewport();
+
+	void BuildGeometryBuffers();
+	void BuildFx();
+	/*
 	void InitPipeline();
 	void InitGraphics();
-
+	*/
 	SIZE WindowSize();
 
 	IDXGISwapChain *m_pSwapChain;
@@ -28,6 +32,9 @@ private:
 	ID3D11PixelShader *m_pPS;
 	ID3D11InputLayout *m_pInputLayout;
 	ID3D11Buffer *m_pBuffer;
+
+	ID3D11Buffer *m_pVB;
+	ID3D11Buffer *m_pIB;
 
 	D3D_FEATURE_LEVEL m_featureLevel;
 };
