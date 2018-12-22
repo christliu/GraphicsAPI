@@ -203,14 +203,14 @@ void DX11Graphics::BuildGeometryBuffers()
 	HRESULT hr;
 	VERTEX vertices[] =
 	{
-		{ XMFLOAT3(-1.0f, -1.0f, -1.0f), XMFLOAT4((const float*)Colors::White) },
-	{ XMFLOAT3(-1.0f, +1.0f, -1.0f), XMFLOAT4((const float*)&Colors::Black) },
-	{ XMFLOAT3(+1.0f, +1.0f, -1.0f), XMFLOAT4((const float*)&Colors::Red) },
-	{ XMFLOAT3(+1.0f, -1.0f, -1.0f), XMFLOAT4((const float*)&Colors::Green) },
-	{ XMFLOAT3(-1.0f, -1.0f, +1.0f), XMFLOAT4((const float*)&Colors::Blue) },
-	{ XMFLOAT3(-1.0f, +1.0f, +1.0f), XMFLOAT4((const float*)&Colors::Yellow) },
-	{ XMFLOAT3(+1.0f, +1.0f, +1.0f), XMFLOAT4((const float*)&Colors::Cyan) },
-	{ XMFLOAT3(+1.0f, -1.0f, +1.0f), XMFLOAT4((const float*)&Colors::Magenta) }
+		{ XMFLOAT3(-1.0f, -1.0f, -1.0f), XMFLOAT4(0.0f, 0.0f, 0.0f, 1.0f) },
+		{ XMFLOAT3(-1.0f, 1.0f, -1.0f), XMFLOAT4(1.0f, 0.0f, 0.0f, 1.0f) },
+		{ XMFLOAT3(1.0f, 1.0f, -1.0f), XMFLOAT4(1.0f, 1.0f, 0.0f, 1.0f) },
+		{ XMFLOAT3(1.0f, -1.0f, -1.0f), XMFLOAT4(0.0f, 1.0f, 0.0f, 1.0f) },
+		{ XMFLOAT3(-1.0f, -1.0f, 1.0f), XMFLOAT4(0.0f, 0.0f, 1.0f, 1.0f) },
+		{ XMFLOAT3(-1.0f, 1.0f, 1.0f), XMFLOAT4(1.0f, 0.0f, 1.0f, 1.0f) },
+		{ XMFLOAT3(1.0f, 1.0f, 1.0f), XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f) },
+		{ XMFLOAT3(1.0f, -1.0f, 1.0f), XMFLOAT4(0.0f, 1.0f, 1.0f, 1.0f) }
 	};
 
 	D3D11_BUFFER_DESC vbd;
@@ -224,10 +224,15 @@ void DX11Graphics::BuildGeometryBuffers()
 	vinitData.pSysMem = vertices;
 	hr = m_pDevice->CreateBuffer(&vbd, &vinitData, &m_pVB);
 
+
+	UINT stride = sizeof(VERTEX);
+	UINT offset = 0;
+	m_pImmediateContext->IASetVertexBuffers(0, 1, &m_pVB, &stride, &offset);
+
 	assert(hr == 0, "CreateBufferFailed");
-
+	
 	// Create the index buffer
-
+	/*
 	UINT indices[] = {
 		// front face
 		0, 1, 2,
@@ -253,10 +258,33 @@ void DX11Graphics::BuildGeometryBuffers()
 		4, 0, 3,
 		4, 3, 7
 	};
+	*/
+	WORD indices[] = {
+		// 正面
+		0, 1, 2,
+		2, 3, 0,
+		// 左面
+		4, 5, 1,
+		1, 0, 4,
+		// 顶面
+		1, 5, 6,
+		6, 2, 1,
+		// 背面
+		7, 6, 5,
+		5, 4, 7,
+		// 右面
+		3, 2, 6,
+		6, 7, 3,
+		// 底面
+		4, 0, 3,
+		3, 7, 4
+	};
 
 	D3D11_BUFFER_DESC ibd;
 	ibd.Usage = D3D11_USAGE_IMMUTABLE;
-	ibd.ByteWidth = sizeof(UINT) * 36;
+	ibd.ByteWidth = sizeof indices;
+	//ibd.ByteWidth = sizeof(UINT) * 36;
+
 	ibd.BindFlags = D3D11_BIND_INDEX_BUFFER;
 	ibd.CPUAccessFlags = 0;
 	ibd.MiscFlags = 0;
@@ -268,9 +296,6 @@ void DX11Graphics::BuildGeometryBuffers()
 
 	m_pImmediateContext->IASetIndexBuffer(m_pIB, DXGI_FORMAT_R16_UINT, 0);
 
-	UINT stride = sizeof(VERTEX);
-	UINT offset = 0;
-	m_pImmediateContext->IASetVertexBuffers(0, 1, &m_pVB, &stride, &offset);
 
 	// ConstBuffer
 	D3D11_BUFFER_DESC cbd;
@@ -342,22 +367,12 @@ void DX11Graphics::UpdateScene()
 void DX11Graphics::OnDraw()
 {
 	// clear the back buffer to a deep blue
-	const FLOAT clearColor[] = { 0.0f, 0.2f, 0.4f, 1.0f };
-	m_pImmediateContext->ClearRenderTargetView(m_pRtv, clearColor);
+	const FLOAT clearColor[] = { 0.0f, 0.0f, 0.0f, 1.0f };
+	m_pImmediateContext->ClearRenderTargetView(m_pRtv, Colors::Black);
 	m_pImmediateContext->ClearDepthStencilView(mDepthStencilView, D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f, 0);
+	UpdateScene();
+	m_pImmediateContext->DrawIndexed(36, 0, 0);
 
-	// do 3D rendering on the back buffer here
-	{
-		// select which vertex buffer to display
-
-		// select which primtive type we are using
-
-
-		UpdateScene();
-		// draw the vertex buffer to the back buffer
-		//m_pImmediateContext->Draw(3, 0);
-		m_pImmediateContext->DrawIndexed(36, 0, 0);
-	}
 
 	// swap the back buffer and the front buffer
 	m_pSwapChain->Present(0, 0);

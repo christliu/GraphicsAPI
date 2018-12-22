@@ -2,8 +2,8 @@
 
 const char* WindowBaseApplication::m_appName = "WindowsApp";
 const char* WindowBaseApplication::m_winTitle = "WindowsApp";
-const int WindowBaseApplication::m_screenWidth = 500;
-const int WindowBaseApplication::m_screenHeight = 500;
+const int WindowBaseApplication::m_screenWidth = 800;
+const int WindowBaseApplication::m_screenHeight = 600;
 
 bool WindowBaseApplication::Initialize()
 {
