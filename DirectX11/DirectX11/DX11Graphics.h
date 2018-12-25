@@ -9,7 +9,7 @@
 class DX11Graphics
 {
 public:
-	DX11Graphics(HWND& hwnd):m_hwnd(hwnd), mEnable4xMsaa(TRUE) {};
+	DX11Graphics(HWND& hwnd):m_hwnd(hwnd), mEnable4xMsaa(FALSE) {};
 
 	bool Initialize();
 	void OnDraw();

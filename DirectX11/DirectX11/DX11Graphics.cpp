@@ -366,13 +366,13 @@ void DX11Graphics::UpdateScene()
 
 void DX11Graphics::OnDraw()
 {
+	UpdateScene();
 	// clear the back buffer to a deep blue
 	const FLOAT clearColor[] = { 0.0f, 0.0f, 0.0f, 1.0f };
 	m_pImmediateContext->ClearRenderTargetView(m_pRtv, Colors::Black);
 	m_pImmediateContext->ClearDepthStencilView(mDepthStencilView, D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f, 0);
-	UpdateScene();
-	m_pImmediateContext->DrawIndexed(36, 0, 0);
 
+	m_pImmediateContext->DrawIndexed(36, 0, 0);
 
 	// swap the back buffer and the front buffer
 	m_pSwapChain->Present(0, 0);
