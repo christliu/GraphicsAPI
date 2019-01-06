@@ -1,12 +1,13 @@
-#include "WindowBaseApplication.h"
+#include "WindowsApplication.h"
+#include <iostream>
 
-const char* WindowBaseApplication::m_appName = "WindowsApp";
-const char* WindowBaseApplication::m_winTitle = "WindowsApp";
-const int WindowBaseApplication::m_screenWidth = 800;
-const int WindowBaseApplication::m_screenHeight = 600;
-
-bool WindowBaseApplication::Initialize()
+WindowsApplication::WindowsApplication():m_appTitle("WinApp"), m_screenWidth(800), m_screenHeight(600), m_appName("ChristJunior")
 {
+}
+
+bool WindowsApplication::Initialize()
+{
+	std::cout << "WindowsApp Init" << std::endl;
 	HINSTANCE hInstance = GetModuleHandle(NULL);
 
 	WNDCLASSEX wc;
@@ -22,10 +23,10 @@ bool WindowBaseApplication::Initialize()
 
 	RegisterClassEx(&wc);
 
-	m_hWnd = CreateWindowEx(
+	m_hwnd = CreateWindowEx(
 		0,
 		m_appName,
-		m_winTitle,
+		m_appTitle,
 		WS_OVERLAPPEDWINDOW,
 		CW_USEDEFAULT,
 		CW_USEDEFAULT,
@@ -37,15 +38,12 @@ bool WindowBaseApplication::Initialize()
 		this
 	);
 
-	ShowWindow(m_hWnd, SW_SHOW);
+	ShowWindow(m_hwnd, SW_SHOW);
 
-	p_graphics = new DX11Graphics(m_hWnd);
-
-	return p_graphics->Initialize();
-
+	return true;
 }
 
-void WindowBaseApplication::Tick()
+void WindowsApplication::Tick()
 {
 	MSG msg;
 	if (GetMessage(&msg, NULL, 0, 0))
@@ -55,33 +53,18 @@ void WindowBaseApplication::Tick()
 	}
 }
 
-void WindowBaseApplication::Quit()
-{
-	m_bQuit = true;
-}
-
-void WindowBaseApplication::Finalize()
+void WindowsApplication::Finalize()
 {
 
 }
 
-void WindowBaseApplication::OnDraw()
+LRESULT CALLBACK WindowsApplication::WindowProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
-	p_graphics->OnDraw();
-}
-
-void WindowBaseApplication::OnMouseMove(int x, int y)
-{
-	
-}
-
-LRESULT CALLBACK WindowBaseApplication::WindowProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
-{
-	WindowBaseApplication *pThis;
+	WindowsApplication *pThis;
 
 	if (message == WM_NCCREATE)
 	{
-		pThis = static_cast<WindowBaseApplication*>(reinterpret_cast<CREATESTRUCT*>(lParam)->lpCreateParams);
+		pThis = static_cast<WindowsApplication*>(reinterpret_cast<CREATESTRUCT*>(lParam)->lpCreateParams);
 
 		SetLastError(0);
 		if (!SetWindowLongPtr(hWnd, GWLP_USERDATA, reinterpret_cast<LONG_PTR>(pThis)))
@@ -92,26 +75,26 @@ LRESULT CALLBACK WindowBaseApplication::WindowProc(HWND hWnd, UINT message, WPAR
 	}
 	else
 	{
-		pThis = reinterpret_cast<WindowBaseApplication*>(GetWindowLongPtr(hWnd, GWLP_USERDATA));
+		pThis = reinterpret_cast<WindowsApplication*>(GetWindowLongPtr(hWnd, GWLP_USERDATA));
 	}
 
 	switch (message)
 	{
 
 	case WM_PAINT:
-		pThis->OnDraw();
+		g_pApp->OnDraw();
 		break;
 
 	case WM_MOUSEMOVE:
 	{
 		int x = LOWORD(lParam);
 		int y = HIWORD(lParam);
-		pThis->OnMouseMove(x, y);
+		g_pApp->OnMouseMove(x, y);
 		break;
 	}
 	case WM_DESTROY:
 		PostQuitMessage(0);
-		pThis->Quit();
+		g_pApp->Quit();
 		break;
 	default:
 		return DefWindowProc(hWnd, message, wParam, lParam);

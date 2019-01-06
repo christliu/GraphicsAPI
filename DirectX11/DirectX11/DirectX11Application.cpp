@@ -1,19 +1,22 @@
-#include "DX11Graphics.h"
-
-#include <iostream>
+#include "DirectX11Application.h"
+#include <d3d11.h>
+#include <DirectXMath.h>
 #include <d3dcompiler.h>
-
-
-#pragma comment(lib,"d3dcompiler.lib")
-//#pragma  comment(lib,"Effects11d.lib")
-
+#include "DirectXPackedVector.h"
+#include "DirectXColors.h"
+#include <iostream>
 
 using namespace std;
 using namespace DirectX;
 using namespace DirectX::PackedVector;
 
+#pragma comment(lib,"d3dcompiler.lib")
 
-#define ReleaseCOM(x) { if(x){ x->Release(); x = 0; } }
+struct VERTEX {
+	XMFLOAT3    Position;
+	XMFLOAT4    Color;
+};
+
 
 HRESULT CompileShader(_In_ LPCWSTR srcFile, _In_ LPCSTR entryPoint, _In_ LPCSTR profile, _Outptr_ ID3DBlob** blob)
 {
@@ -57,30 +60,71 @@ HRESULT CompileShader(_In_ LPCWSTR srcFile, _In_ LPCSTR entryPoint, _In_ LPCSTR 
 	return hr;
 }
 
-
-struct VERTEX {
-	XMFLOAT3    Position;
-	XMFLOAT4    Color;
-};
-
-
-SIZE DX11Graphics::WindowSize()
+// DX11Pipeline
+bool DirectX11Application::Initialize()
 {
-	RECT rt;
-	GetWindowRect(m_hwnd, &rt);
+	if (!WindowsApplication::Initialize())
+		return false;
 
-	return SIZE{ rt.right - rt.left, rt.bottom - rt.top };
+	std::cout << "DirectX11 Init" << std::endl;
+
+	return DX11Initialize();
 }
 
-bool DX11Graphics::Initialize()
+void DirectX11Application::OnDraw()
+{
+	m_pImmediateContext->UpdateSubresource(m_pCB, 0, nullptr, &mCBuffer, 0, 0);
+	// clear the back buffer to a deep blue
+	const FLOAT clearColor[] = { 0.0f, 0.0f, 0.0f, 1.0f };
+	m_pImmediateContext->ClearRenderTargetView(m_pRtv, Colors::Black);
+	m_pImmediateContext->ClearDepthStencilView(mDepthStencilView, D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f, 0);
+
+	m_pImmediateContext->DrawIndexed(36, 0, 0);
+
+	// swap the back buffer and the front buffer
+	m_pSwapChain->Present(0, 0);
+}
+
+
+bool DirectX11Application::DX11Initialize()
+{
+	if (!DX11PipelineInitialize())
+		return false;
+
+	GraphicsInitialize();
+
+	return true;
+}
+
+bool DirectX11Application::DX11PipelineInitialize()
+{
+	if (!CreateDeviceAndSwapchain())
+		return false;
+
+	if (!CreateRenderTarget())
+		return false;
+	cout << "CreateRenderTargetView Success" << endl;
+	SetViewport();
+	cout << "SetViewport Success" << endl;
+	return true;
+}
+
+void DirectX11Application::GraphicsInitialize()
+{
+	BuildGeometryBuffers();
+	BuildConstantBuffer();
+	BuildFX();
+	BuildVertexLayout();
+}
+
+bool DirectX11Application::CreateDeviceAndSwapchain()
 {
 	DXGI_SWAP_CHAIN_DESC sd;
 	ZeroMemory(&sd, sizeof(sd));
 
-	SIZE windowSize = WindowSize();
 	sd.BufferCount = 1;
-	sd.BufferDesc.Width = int(windowSize.cx);
-	sd.BufferDesc.Height = int(windowSize.cy);
+	sd.BufferDesc.Width = int(m_screenWidth);
+	sd.BufferDesc.Height = int(m_screenHeight);
 	sd.BufferDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
 	sd.BufferDesc.RefreshRate.Numerator = 60;
 	sd.BufferDesc.RefreshRate.Denominator = 1;
@@ -106,32 +150,19 @@ bool DX11Graphics::Initialize()
 		&m_featureLevel,
 		&m_pImmediateContext)))
 	{
-		cout << "D3D11CreateDeviceAndSwapChain Failed " << hr << endl;
+		std::cout << "D3D11CreateDeviceAndSwapChain Failed " << hr << std::endl;
 		return FALSE;
 	}
-	cout << "D3D11CreateDeviceAndSwapChain Success with FeatureLevel " << m_featureLevel << endl;
+	std::cout << "D3D11CreateDeviceAndSwapChain Success with FeatureLevel " << m_featureLevel << endl;
 
 	hr = m_pDevice->CheckMultisampleQualityLevels(
 		DXGI_FORMAT_R8G8B8A8_UNORM, 4, &m4xMsaaQuality);
+	cout << "CheckMultisampleQualityLevels" << m4xMsaaQuality << endl;
 	assert(m4xMsaaQuality > 0);
-
-	CreateRenderTarget();
-	cout << "CreateRenderTargetView Success" << endl;
-	BuildGeometryBuffers();
-	cout << "BuildGemetryBuffers success" << endl;
-	BuildFx();
-	cout << "BuildFx success" << endl;
-	BuildVertexLayout();
-	cout << "Build VertexLayout Success" << endl;
-	SetViewport();
-	cout << "SetViewPort Success" << endl;
-	return TRUE;
+	return true;
 }
 
-/*
-Create RenderTargetView and DepthStencilView
-*/
-void DX11Graphics::CreateRenderTarget()
+bool DirectX11Application::CreateRenderTarget()
 {
 	HRESULT hr;
 	ID3D11Texture2D *pBackBuffer;
@@ -148,11 +179,10 @@ void DX11Graphics::CreateRenderTarget()
 	// Create DepthStencil View
 	// Create the depth/stencil buffer and view.
 
-	SIZE windowSize = WindowSize();
 	D3D11_TEXTURE2D_DESC depthStencilDesc;
 
-	depthStencilDesc.Width = windowSize.cx;
-	depthStencilDesc.Height = windowSize.cy;
+	depthStencilDesc.Width = m_screenWidth;
+	depthStencilDesc.Height = m_screenHeight;
 	depthStencilDesc.MipLevels = 1;
 	depthStencilDesc.ArraySize = 1;
 	depthStencilDesc.Format = DXGI_FORMAT_D24_UNORM_S8_UINT;
@@ -180,24 +210,23 @@ void DX11Graphics::CreateRenderTarget()
 
 	// Bind the view
 	m_pImmediateContext->OMSetRenderTargets(1, &m_pRtv, mDepthStencilView);
+	return true;
 }
 
-void DX11Graphics::SetViewport()
+void DirectX11Application::SetViewport()
 {
 	D3D11_VIEWPORT viewport;
 	ZeroMemory(&viewport, sizeof(D3D11_VIEWPORT));
-	SIZE sz = WindowSize();
 
 	viewport.TopLeftX = 0;
 	viewport.TopLeftY = 0;
-	viewport.Width = sz.cx;
-	viewport.Height = sz.cy;
+	viewport.Width = m_screenWidth;
+	viewport.Height = m_screenHeight;
 
 	m_pImmediateContext->RSSetViewports(1, &viewport);
 }
 
-
-void DX11Graphics::BuildGeometryBuffers()
+void DirectX11Application::BuildGeometryBuffers()
 {
 	// Create vertex buffer
 	HRESULT hr;
@@ -230,35 +259,8 @@ void DX11Graphics::BuildGeometryBuffers()
 	m_pImmediateContext->IASetVertexBuffers(0, 1, &m_pVB, &stride, &offset);
 
 	assert(hr == 0, "CreateBufferFailed");
-	
+
 	// Create the index buffer
-	/*
-	UINT indices[] = {
-		// front face
-		0, 1, 2,
-		0, 2, 3,
-
-		// back face
-		4, 6, 5,
-		4, 7, 6,
-
-		// left face
-		4, 5, 1,
-		4, 1, 0,
-
-		// right face
-		3, 2, 6,
-		3, 6, 7,
-
-		// top face
-		1, 5, 6,
-		1, 6, 2,
-
-		// bottom face
-		4, 0, 3,
-		4, 3, 7
-	};
-	*/
 	WORD indices[] = {
 		// 正面
 		0, 1, 2,
@@ -295,18 +297,11 @@ void DX11Graphics::BuildGeometryBuffers()
 	assert(hr == 0, "CreateIndexBuffer Failed");
 
 	m_pImmediateContext->IASetIndexBuffer(m_pIB, DXGI_FORMAT_R16_UINT, 0);
+	m_pImmediateContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+}
 
-
-	// ConstBuffer
-	D3D11_BUFFER_DESC cbd;
-	ZeroMemory(&cbd, sizeof(cbd));
-	cbd.Usage = D3D11_USAGE_DEFAULT;
-	cbd.ByteWidth = sizeof(ConstantBuffer);
-	cbd.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
-	cbd.CPUAccessFlags = 0;
-	hr = m_pDevice->CreateBuffer(&cbd, NULL, &m_pCB);
-
-	// 初始化常量缓冲区的值
+void DirectX11Application::BuildConstantBuffer()
+{
 	mCBuffer.world = XMMatrixIdentity();	// 单位矩阵的转置是它本身
 	mCBuffer.view = XMMatrixTranspose(XMMatrixLookAtLH(
 		XMVectorSet(0.0f, 0.0f, -5.0f, 0.0f),
@@ -315,13 +310,20 @@ void DX11Graphics::BuildGeometryBuffers()
 	));
 	mCBuffer.proj = XMMatrixTranspose(XMMatrixPerspectiveFovLH(XM_PIDIV2, AspectRatio(), 1.0f, 1000.0f));
 
-	m_pImmediateContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-	m_pImmediateContext->VSSetConstantBuffers(0, 1, &m_pCB);
+	D3D11_BUFFER_DESC cbd;
+	ZeroMemory(&cbd, sizeof(cbd));
+	cbd.Usage = D3D11_USAGE_DEFAULT;
+	cbd.ByteWidth = sizeof(ConstantBuffer);
+	cbd.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
+	cbd.CPUAccessFlags = 0;
+	HRESULT hr = m_pDevice->CreateBuffer(&cbd, NULL, &m_pCB);
 
+	m_pImmediateContext->VSSetConstantBuffers(0, 1, &m_pCB);
 }
 
-void DX11Graphics::BuildFx()
+void DirectX11Application::BuildFX()
 {
+
 	HRESULT hr;
 	ID3DBlob* blob;
 
@@ -344,7 +346,7 @@ void DX11Graphics::BuildFx()
 	m_pImmediateContext->PSSetShader(m_pPixelShader, nullptr, 0);
 }
 
-void DX11Graphics::BuildVertexLayout()
+void DirectX11Application::BuildVertexLayout()
 {
 	HRESULT hr;
 	// Create the vertex input layout.
@@ -357,23 +359,4 @@ void DX11Graphics::BuildVertexLayout()
 	hr = m_pDevice->CreateInputLayout(vertexDesc, 2, m_pVertexBlob->GetBufferPointer(), m_pVertexBlob->GetBufferSize(), &m_pInputLayout);
 	assert(hr == 0);
 	m_pImmediateContext->IASetInputLayout(m_pInputLayout);
-}
-
-void DX11Graphics::UpdateScene()
-{
-	m_pImmediateContext->UpdateSubresource(m_pCB, 0, nullptr, &mCBuffer, 0, 0);
-}
-
-void DX11Graphics::OnDraw()
-{
-	UpdateScene();
-	// clear the back buffer to a deep blue
-	const FLOAT clearColor[] = { 0.0f, 0.0f, 0.0f, 1.0f };
-	m_pImmediateContext->ClearRenderTargetView(m_pRtv, Colors::Black);
-	m_pImmediateContext->ClearDepthStencilView(mDepthStencilView, D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f, 0);
-
-	m_pImmediateContext->DrawIndexed(36, 0, 0);
-
-	// swap the back buffer and the front buffer
-	m_pSwapChain->Present(0, 0);
 }

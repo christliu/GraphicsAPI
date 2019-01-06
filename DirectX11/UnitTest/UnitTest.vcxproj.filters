@@ -13,46 +13,21 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
-    <Filter Include="着色器">
-      <UniqueIdentifier>{a23b3932-7728-4712-a699-be1eeb0ec70f}</UniqueIdentifier>
-    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="BaseApplication.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
-    <ClCompile Include="WindowsApplication.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
-    <ClCompile Include="DirectX11Application.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="WindowsApplication.h">
+    <ClInclude Include="Base.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="BaseApplication.h">
+    <ClInclude Include="Derived.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="DirectX11Application.h">
+    <ClInclude Include="TestApp.h">
       <Filter>头文件</Filter>
     </ClInclude>
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="Cube.hlsli">
-      <Filter>着色器</Filter>
-    </None>
-  </ItemGroup>
-  <ItemGroup>
-    <FxCompile Include="Cube_PS.hlsl">
-      <Filter>着色器</Filter>
-    </FxCompile>
-    <FxCompile Include="Cube_VS.hlsl">
-      <Filter>着色器</Filter>
-    </FxCompile>
   </ItemGroup>
 </Project>
